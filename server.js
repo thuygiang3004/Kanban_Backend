@@ -16,6 +16,7 @@ mongoose
   .connect("mongodb://localhost/kanban", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: false,
   })
   .then(() => {
     console.log("Database connected");

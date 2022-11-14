@@ -8,10 +8,11 @@ const cardRouter = express.Router();
 // Create a new card
 cardRouter.post("/", async (req, res, next) => {
   try {
-    const { title, columnId, cardId } = req.body;
+    const { title, dueDate, columnId, cardId } = req.body;
     await Card.find().exec();
     const newCard = new Card({
       title,
+      dueDate,
       column: columnId,
       cardId,
     });
@@ -37,7 +38,7 @@ cardRouter.post("/", async (req, res, next) => {
 });
 
 const findAllCards = (columnId) =>
-  Card.find({ column: columnId }).select("cardId title");
+  Card.find({ column: columnId }).select("cardId title dueDate");
 
 // Get all cards of each column
 cardRouter.post("/getallcards", async (req, res) => {
@@ -61,24 +62,44 @@ cardRouter.post("/getallcards", async (req, res) => {
   }
 });
 
-// Edit card title (not implement frontend yet)
+// Edit card
 cardRouter.post("/card/:cardId", async (req, res) => {
   try {
     const { cardId } = req.params;
+    Card.findOne({ cardId: cardId }).exec((err, card) => {
+      card.title = req.body.title;
+      card.dueDate = req.body.dueDate;
+      card
+        .save()
+        .then((result) =>
+          res.status(201).json({ message: "card updated", data: card })
+        )
+        .catch((err) => res.status(500).json(err));
+    });
+  } catch (e) {
+    return internalErrorResponse(e, res);
+  }
+});
 
-    if (req.query.title) {
-      const card = await Card.findOneAndUpdate(cardId, {
-        content: req.body.title,
-      }).exec();
-      if (!card) {
-        return res
-          .status(404)
-          .json({ message: "unable to find card of provided Id" });
-      }
-      return res
-        .status(201)
-        .json({ message: "card content/title updated", data: card.content });
-    }
+// Remove card
+cardRouter.post("/card/remove/:cardId", async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    let columnId = req.body.columnId;
+    const result = Card.findOneAndDelete({ cardId: cardId }).exec(
+      (err, card) => {}
+    );
+    Column.findOne({ columnId: columnId }).exec((err, column) => {
+      column.cardIds = column.cardIds.filter((a) => a != cardId);
+      column
+        .save()
+        .then((result) =>
+          res
+            .status(201)
+            .json({ message: "card deleted and column updated", data: column })
+        )
+        .catch((err) => res.status(500).json(err));
+    });
   } catch (e) {
     return internalErrorResponse(e, res);
   }
@@ -140,9 +161,9 @@ cardRouter.post("/reorder/differentcolumn", async (req, res, next) => {
     reorderedCard.set({ column: addedColumnId });
     await reorderedCard.save();
 
-    return res
-      .status(200)
-      .json({ message: "different column reorder success" });
+    return res.status(200).json({
+      message: "different column reorder success",
+    });
   } catch (e) {
     return internalErrorResponse(e, res);
   }

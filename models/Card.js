@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const CardSchema = new Schema({
   cardId: { type: String },
   title: { type: String, required: true },
+  dueDate: { type: Date },
   column: { type: String, ref: "cards" },
 });
 
