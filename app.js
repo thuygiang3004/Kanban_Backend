@@ -3,7 +3,7 @@ const express = require("express");
 // const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-// const userRouter = require( "./api/routes/users");
+const userRouter = require("./routes/users");
 const boardRouter = require("./routes/boards");
 const columnRouter = require("./routes/columns");
 const cardRouter = require("./routes/cards");
@@ -18,7 +18,7 @@ app.use(bodyParser.json());
 app.options("*", cors());
 app.use(cors());
 
-// app.use('/api/users',userRouter);
+app.use("/api/users", userRouter);
 app.use("/api/boards", boardRouter);
 app.use("/api/columns", columnRouter);
 app.use("/api/cards", cardRouter);
