@@ -2,17 +2,20 @@ const express = require("express");
 const Board = require("../models/Board");
 const mongoose = require("mongoose");
 const internalErrorResponse = require("../utils/internalErrorResponse");
+const checkAuth = require("../middleware/check-auth");
 
 const boardRouter = express.Router();
 
 // Create new Board
-boardRouter.post("/", (req, res, next) => {
+boardRouter.post("/", checkAuth, (req, res, next) => {
+  console.log(req);
   const { title, dueDate } = req.body;
   console.log(req.userData);
   Board.find()
     .exec()
     .then((board) => {
       const newBoard = new Board({
+        user: req.userData._id,
         title,
         dueDate,
         columnOrder: [],
@@ -65,8 +68,9 @@ boardRouter.get("/board/:boardId", (req, res, next) => {
 });
 
 // Get all boards list
-boardRouter.get("/all", (req, res, next) => {
-  Board.find({})
+boardRouter.get("/all", checkAuth, (req, res, next) => {
+  console.log(req.userData._id);
+  Board.find({ user: req.userData._id })
     .select("columnOrder title _id dueDate")
     .exec()
     .then((boards) => {
