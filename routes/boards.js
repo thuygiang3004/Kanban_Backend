@@ -8,7 +8,7 @@ const boardRouter = express.Router();
 
 // Create new Board
 boardRouter.post("/", checkAuth, (req, res, next) => {
-  console.log(req);
+  // console.log(req);
   const { title, dueDate } = req.body;
   console.log(req.userData);
   Board.find()
@@ -69,7 +69,7 @@ boardRouter.get("/board/:boardId", (req, res, next) => {
 
 // Get all boards list
 boardRouter.get("/all", checkAuth, (req, res, next) => {
-  console.log(req.userData._id);
+  // console.log(req.userData._id);
   Board.find({ user: req.userData._id })
     .select("columnOrder title _id dueDate")
     .exec()
