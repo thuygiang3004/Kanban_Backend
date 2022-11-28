@@ -1,5 +1,6 @@
 const express = require("express");
 const Board = require("../models/Board");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 const internalErrorResponse = require("../utils/internalErrorResponse");
 const checkAuth = require("../middleware/check-auth");
@@ -19,6 +20,7 @@ boardRouter.post("/", checkAuth, (req, res, next) => {
         title,
         dueDate,
         columnOrder: [],
+        members: [req.userData._id],
       });
 
       newBoard
@@ -88,5 +90,83 @@ boardRouter.get("/all", checkAuth, (req, res, next) => {
     })
     .catch((error) => internalErrorResponse(error, res));
 });
+
+// Add member to a board
+boardRouter.post("/members/add", checkAuth, (req, res, next) => {
+  // console.log(req);
+  try {
+    const { userId, boardId } = req.body;
+    Board.findOne({ _id: boardId }).exec((err, board) => {
+      board.members.push(userId);
+      board
+        .save()
+        .then((result) =>
+          res
+            .status(201)
+            .json({ message: "members updated", data: board.members })
+        )
+        .catch((err) => res.status(500).json(err));
+    });
+  } catch (e) {
+    return internalErrorResponse(e, res);
+  }
+});
+
+// List members of a board
+boardRouter.post("/members/all", (req, res, next) => {
+  const { boardId } = req.body;
+  let members = [];
+  Board.findOne({ _id: boardId })
+    .exec()
+    .then(async (board) => {
+      const result = () => {
+        board.members.map((memberId) => {
+          User.findOne({ _id: memberId })
+            .exec()
+            .then((member) => {
+              let publicMember = {
+                _id: member._id,
+                email: member.email,
+              };
+              members.push(publicMember);
+              console.log(members);
+            });
+          // console.log("inside" + members);
+        });
+        return members;
+      };
+      result();
+      // const result = await getMembers(members);
+      console.log(members);
+
+      return res.status(200).json({ members: members });
+
+      // console.log("outside" + result);
+      // return res.status(200).json({ members: members });
+    })
+    .catch((error) => internalErrorResponse(error, res));
+});
+
+// boardRouter.post("/members/all", async (req, res, next) => {
+//   const { boardId } = req.body;
+//   const board = await Board.findOne({ _id: boardId });
+
+//   let members = [];
+
+//   board.members.map((memberId) => {
+//     User.findOne({ _id: memberId })
+//       .exec()
+//       .then((member) => {
+//         let publicMember = {
+//           _id: member._id,
+//           email: member.email,
+//         };
+//         members.push(publicMember);
+//       });
+//     console.log("inside" + members);
+//   });
+
+//   return res.status(200).json({ members: members });
+// });
 
 module.exports = boardRouter;

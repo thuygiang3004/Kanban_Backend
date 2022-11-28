@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/User");
+const Board = require("../models/Board");
 const validateRegisterInput = require("../validation/register");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -11,18 +12,7 @@ require("dotenv").config();
 
 const userRouter = express.Router();
 
-// @route GET /api/users/test
-// @desc Test user route
-// @ access private
-userRouter.post("/test", (req, res, next) => {
-  console.log(mongoose.Types.ObjectId.fromString(req.body.id));
-  console.log(mongoose.Types.ObjectId.isValid(req.body.id));
-  res.status(200).json({ message: "Working" });
-});
-
-// @route POST /api/user/register
-// @desc register the user
-// @ access Public
+// Register new user
 userRouter.post("/register", (req, res, next) => {
   const { errors, isValid } = validateRegisterInput(req.body);
   if (!isValid) {
@@ -56,10 +46,7 @@ userRouter.post("/register", (req, res, next) => {
     .catch((err) => res.status(500).json(err));
 });
 
-// @route POST /api/user/login
-// @desc login the user
-// @ access Public
-
+// User login
 userRouter.post("/login", async (req, res, next) => {
   try {
     const { errors, isValid } = validateLoginInput(req.body);
@@ -87,6 +74,35 @@ userRouter.post("/login", async (req, res, next) => {
       return res.status(200).json({ message: "Auth Successful", token });
     }
     res.status(401).json({ message: "Unauthorized" });
+  } catch (e) {
+    throw new Error(e.message);
+  }
+});
+
+userRouter.post("/exist", async (req, res, next) => {
+  try {
+    const { memberEmail, boardId } = req.body;
+    const user = await User.findOne({ email: memberEmail }).exec();
+    if (!user) {
+      return res.status(204).json({ message: "Not found" });
+    }
+    const thisBoard = await Board.findOne({ _id: boardId });
+    const currentMembers = thisBoard.members;
+    const filteredMember = currentMembers.find(
+      (member) => member.toString() == user._id.toString()
+    );
+
+    if (filteredMember) {
+      return res
+        .status(201)
+        .json({ message: "This person is already a member" });
+    }
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    };
+    return res.status(200).json({ message: "User exists", userData });
   } catch (e) {
     throw new Error(e.message);
   }

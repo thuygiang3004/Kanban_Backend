@@ -9,6 +9,12 @@ const BoardSchema = new Schema({
   title: { type: String, required: true },
   dueDate: { type: Date },
   columnOrder: [{ type: String, ref: "columns" }],
+  members: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+    },
+  ],
 });
 
 const Board = mongoose.model("boards", BoardSchema);
