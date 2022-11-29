@@ -128,7 +128,10 @@ boardRouter.post("/members/all", checkAuth, (req, res, next) => {
                 _id: member._id,
                 name: member.name,
                 email: member.email,
+                isOwner: false,
               };
+              if (publicMember._id.toString() == board.user.toString())
+                publicMember.isOwner = true;
               members.push(publicMember);
             });
         }
