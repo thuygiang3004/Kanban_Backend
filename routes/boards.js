@@ -119,30 +119,37 @@ boardRouter.post("/members/all", (req, res, next) => {
   Board.findOne({ _id: boardId })
     .exec()
     .then(async (board) => {
-      const result = () => {
-        board.members.map((memberId) => {
-          User.findOne({ _id: memberId })
+      // board.members.map((memberId) => {
+      //   User.findOne({ _id: memberId })
+      //     .exec()
+      //     .then((member) => {
+      //       let publicMember = {
+      //         _id: member._id,
+      //         email: member.email,
+      //       };
+      //       newMembers.push(publicMember);
+      //       console.log(newMembers);
+      //     });
+      // });
+      const getMembers = async () => {
+        for (let memberId of board.members) {
+          await User.findOne({ _id: memberId })
             .exec()
             .then((member) => {
               let publicMember = {
                 _id: member._id,
+                name: member.name,
                 email: member.email,
               };
               members.push(publicMember);
-              console.log(members);
+              // console.log(members);
             });
-          // console.log("inside" + members);
-        });
-        return members;
+        }
+        // console.log(members);
       };
-      result();
-      // const result = await getMembers(members);
-      console.log(members);
-
+      await getMembers();
+      // console.log("L150" + members);
       return res.status(200).json({ members: members });
-
-      // console.log("outside" + result);
-      // return res.status(200).json({ members: members });
     })
     .catch((error) => internalErrorResponse(error, res));
 });
