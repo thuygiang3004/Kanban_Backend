@@ -71,8 +71,8 @@ boardRouter.get("/board/:boardId", (req, res, next) => {
 
 // Get all boards list
 boardRouter.get("/all", checkAuth, (req, res, next) => {
-  // console.log(req.userData._id);
-  Board.find({ user: req.userData._id })
+  const userId = req.userData._id;
+  Board.find({ members: userId })
     .select("columnOrder title _id dueDate")
     .exec()
     .then((boards) => {
@@ -113,24 +113,12 @@ boardRouter.post("/members/add", checkAuth, (req, res, next) => {
 });
 
 // List members of a board
-boardRouter.post("/members/all", (req, res, next) => {
+boardRouter.post("/members/all", checkAuth, (req, res, next) => {
   const { boardId } = req.body;
   let members = [];
   Board.findOne({ _id: boardId })
     .exec()
     .then(async (board) => {
-      // board.members.map((memberId) => {
-      //   User.findOne({ _id: memberId })
-      //     .exec()
-      //     .then((member) => {
-      //       let publicMember = {
-      //         _id: member._id,
-      //         email: member.email,
-      //       };
-      //       newMembers.push(publicMember);
-      //       console.log(newMembers);
-      //     });
-      // });
       const getMembers = async () => {
         for (let memberId of board.members) {
           await User.findOne({ _id: memberId })
@@ -142,38 +130,32 @@ boardRouter.post("/members/all", (req, res, next) => {
                 email: member.email,
               };
               members.push(publicMember);
-              // console.log(members);
             });
         }
-        // console.log(members);
       };
       await getMembers();
-      // console.log("L150" + members);
       return res.status(200).json({ members: members });
     })
     .catch((error) => internalErrorResponse(error, res));
 });
 
-// boardRouter.post("/members/all", async (req, res, next) => {
-//   const { boardId } = req.body;
-//   const board = await Board.findOne({ _id: boardId });
-
-//   let members = [];
-
-//   board.members.map((memberId) => {
-//     User.findOne({ _id: memberId })
-//       .exec()
-//       .then((member) => {
-//         let publicMember = {
-//           _id: member._id,
-//           email: member.email,
-//         };
-//         members.push(publicMember);
-//       });
-//     console.log("inside" + members);
-//   });
-
-//   return res.status(200).json({ members: members });
-// });
+// Remove a member from a Board
+boardRouter.post("/members/remove", checkAuth, (req, res, next) => {
+  const { boardId, memberId } = req.body;
+  const userId = req.userData._id;
+  Board.findOne({ _id: boardId }).exec((err, board) => {
+    if (board.user != userId.toString()) {
+      res.status(401).json({ message: "not project owner" });
+    } else {
+      board.members = board.members.filter((a) => a != memberId);
+      board
+        .save()
+        .then((result) =>
+          res.status(201).json({ message: "member deleted", data: board })
+        )
+        .catch((err) => res.status(500).json(err));
+    }
+  });
+});
 
 module.exports = boardRouter;
