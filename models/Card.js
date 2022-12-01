@@ -6,6 +6,10 @@ const CardSchema = new Schema({
   title: { type: String, required: true },
   dueDate: { type: Date },
   column: { type: String, ref: "cards" },
+  assignee: {
+    type: Schema.Types.ObjectId,
+    ref: "users",
+  },
 });
 
 const Card = mongoose.model("tasks", CardSchema);

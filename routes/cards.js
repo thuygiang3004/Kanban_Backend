@@ -2,19 +2,21 @@ const express = require("express");
 const Card = require("../models/Card");
 const internalErrorResponse = require("../utils/internalErrorResponse");
 const Column = require("../models/Column");
+const User = require("../models/User");
 
 const cardRouter = express.Router();
 
 // Create a new card
 cardRouter.post("/", async (req, res, next) => {
   try {
-    const { title, dueDate, columnId, cardId } = req.body;
+    const { title, dueDate, columnId, cardId, assignee } = req.body;
     await Card.find().exec();
     const newCard = new Card({
       title,
       dueDate,
       column: columnId,
       cardId,
+      assignee,
     });
     const result = await newCard.save();
     const column = await Column.findOne({ columnId }).exec();
@@ -38,7 +40,11 @@ cardRouter.post("/", async (req, res, next) => {
 });
 
 const findAllCards = (columnId) =>
-  Card.find({ column: columnId }).select("cardId title dueDate");
+  // Card.find({ column: columnId }).select("cardId title dueDate assignee");
+  Card.find({ column: columnId }).populate({
+    path: "assignee",
+    select: ["email", "name"],
+  });
 
 // Get all cards of each column
 cardRouter.post("/getallcards", async (req, res) => {
@@ -50,7 +56,6 @@ cardRouter.post("/getallcards", async (req, res) => {
       let i = 0;
       for (const columnId of columnIds) {
         const cards = await findAllCards(columnId);
-
         if (cards.length > 0) {
           totalCards.push(cards);
         }
@@ -69,6 +74,7 @@ cardRouter.post("/card/:cardId", async (req, res) => {
     Card.findOne({ cardId: cardId }).exec((err, card) => {
       card.title = req.body.title;
       card.dueDate = req.body.dueDate;
+      card.assignee = req.body.assignee;
       card
         .save()
         .then((result) =>

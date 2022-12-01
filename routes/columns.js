@@ -64,7 +64,6 @@ columnRouter.post("/:columnId", (req, res) => {
 columnRouter.get("/all/:boardId", async (req, res, next) => {
   try {
     const { boardId } = req.params;
-    console.log(boardId);
 
     const board = await Board.findOne({ _id: boardId })
       .select("columnOrder")
