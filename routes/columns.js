@@ -36,28 +36,39 @@ columnRouter.post("/", async (req, res, next) => {
   }
 });
 
-// Change column title (not implement frontend yet)
-columnRouter.post("/:columnId", (req, res) => {
-  const { columnId } = req.params;
+// Change column title
+columnRouter.post("/edit", (req, res) => {
+  console.log(req.body);
+  const { columnId } = req.body;
+  // if (req.query.title) {
 
-  if (req.query.title) {
-    Column.findOneAndUpdate(columnId, { title: req.body.title }, { new: true })
-      .exec()
-      .then((column) => {
-        if (!column) {
-          return res
-            .status(404)
-            .json({ message: "unable to find the column of provided id" });
-        }
-
-        return res
-          .status(200)
-          .json({ message: "column title updated ", data: column.title });
-      })
-      .catch((error) => internalErrorResponse(error, res));
-  } else {
-    return res.status(404).json({ message: "Title not found in the query" });
-  }
+  Column.findOne({ columnId: columnId }).exec((err, column) => {
+    column.title = req.body.title;
+    column
+      .save()
+      .then((result) =>
+        res.status(201).json({ message: "card updated", data: column })
+      )
+      .catch((err) => res.status(500).json(err));
+  });
+  // Column.findOneAndUpdate(columnId, { title: req.body.title }, { new: false })
+  //   .exec()
+  //   .then((column) => {
+  //     if (!column) {
+  //       return res
+  //         .status(404)
+  //         .json({ message: "unable to find the column of provided id" });
+  //     }
+  //     column.save();
+  //     console.log(column);
+  //     return res
+  //       .status(200)
+  //       .json({ message: "column title updated ", data: column.title });
+  //   })
+  //   .catch((error) => internalErrorResponse(error, res));
+  // } else {
+  //   return res.status(404).json({ message: "Title not found in the query" });
+  // }
 });
 
 // Get all the columns of the board
