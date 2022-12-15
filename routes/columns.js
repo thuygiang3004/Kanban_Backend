@@ -17,6 +17,7 @@ columnRouter.post("/", async (req, res, next) => {
       columnId,
     });
     const result = await newColumn.save();
+    console.log(result);
     const board = await Board.findById(boardId).exec();
     if (!board) {
       res.status(404).json({ message: "No Board exists of provided id" });

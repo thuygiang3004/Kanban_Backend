@@ -147,17 +147,17 @@ boardRouter.post("/members/remove", checkAuth, (req, res, next) => {
   const { boardId, memberId } = req.body;
   const userId = req.userData._id;
   Board.findOne({ _id: boardId }).exec((err, board) => {
-    if (board.user != userId.toString()) {
-      res.status(401).json({ message: "not project owner" });
-    } else {
-      board.members = board.members.filter((a) => a != memberId);
-      board
-        .save()
-        .then((result) =>
-          res.status(201).json({ message: "member deleted", data: board })
-        )
-        .catch((err) => res.status(500).json(err));
-    }
+    // if (board.user != userId.toString()) {
+    //   res.status(401).json({ message: "not project owner" });
+    // } else {
+    board.members = board.members.filter((a) => a != memberId);
+    board
+      .save()
+      .then((result) =>
+        res.status(201).json({ message: "member deleted", data: board })
+      )
+      .catch((err) => res.status(500).json(err));
+    // }
   });
 });
 
